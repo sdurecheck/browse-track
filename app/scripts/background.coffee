@@ -10,14 +10,16 @@ Stat =
   cur: null
 
 tabChanged = (url) ->
+#  chrome.storage.sync.get ("db") , (data)->
+#    console.log "LOADED #{data}"
   if Stat.cur
     lst = Stat.data[Stat.cur]
     lst.push(new Date())
   Stat.cur = url
   lst = Stat.data[url] or []
   lst.push(new Date())
+#  chrome.storage.sync.set("db": JSON.stringify(Stat.data))
   Stat.data[url] = lst
-  chrome.storage.sync.set("local":JSON.stringify(Stat.data))
   return Stat.data[url]
 
 calc = (url)->
@@ -43,7 +45,7 @@ updateBadge = (url)->
 parseUrl = ( url = location.href ) ->
   l = document.createElement "a"
   l.href = url
-  return l.hostname
+  return l
   
 
 chrome.tabs.onActivated.addListener (activeInfo)->
@@ -51,9 +53,9 @@ chrome.tabs.onActivated.addListener (activeInfo)->
   Stat.curTabId = activeInfo.tabId
   chrome.tabs.get activeInfo.tabId, (tab) ->
     k = parseUrl tab.url 
-    console.log "ONLy #{k}"
-    tabChanged(k) if tab.url
-    updateBadge k
+    console.log "ONLy #{k.hostname}"
+    tabChanged(k.hostname) if tab.url
+    updateBadge k.hostname 
 
 chrome.alarms.onAlarm.addListener (alarm)->
   console.log alarm, Stat.curTabId
@@ -62,8 +64,8 @@ chrome.alarms.onAlarm.addListener (alarm)->
       return
     chrome.tabs.get Stat.curTabId, (tab)->
       k = parseUrl tab.url 
-      if tab.url
-        updateBadge k
+      if tab.url 
+        updateBadge k.hostname
 
 chrome.alarms.create("update", {periodInMinutes: 0.1})
 console.log('\'Allo \'Allo! Event Page for Browser Action')
